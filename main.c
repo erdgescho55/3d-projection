@@ -1,3 +1,5 @@
+#include "SDL3/SDL_rect.h"
+#include "SDL3/SDL_render.h"
 #include <SDL3/SDL.h>
 
 #define WINDOW_WIDTH 800
@@ -56,9 +58,11 @@ void loop(SDL_Renderer *r)
       }
     }
 
-    SDL_SetRenderDrawColor(r, 255, 0, 0, 255);
-
+    SDL_SetRenderDrawColor(r, 100, 0, 100, 255);
     SDL_RenderClear(r);
+
+    SDL_SetRenderDrawColor(r, 255, 255, 0, 255);
+    SDL_RenderFillRect(r, &(SDL_FRect){350, 250, 100, 100});
 
     SDL_RenderPresent(r);
   }
