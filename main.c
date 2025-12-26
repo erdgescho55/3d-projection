@@ -1,4 +1,5 @@
 #include <SDL3/SDL.h>
+#include <math.h>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -25,6 +26,7 @@ Vec2 convertToScreenCoordinates(Vec2 point);
 Vec2 projectToScreen(Vec3 point);
 
 Vec3 translate_z(Vec3 point, float dz);
+Vec3 rotate_y(Vec3 point, float angle);
 
 int main()
 {
@@ -70,7 +72,9 @@ void loop(SDL_Renderer *r)
   SDL_Event event;
 
   float dt = 1. / FPS;
+
   float dz = 0;
+  float angle = 0;
 
   Vec3 vs[] = {
       {0.5, 0.5, 0.5},    {-0.5, 0.5, 0.5},
@@ -94,14 +98,15 @@ void loop(SDL_Renderer *r)
     }
 
     dz += 1 * dt;
+    angle += M_PI * dt;
 
     SDL_SetRenderDrawColor(r, 24, 24, 24, 255);
     SDL_RenderClear(r);
 
     for (int i = 0; i < vs_len; i++)
     {
-      drawPoint(r, convertToScreenCoordinates(
-                       projectToScreen(translate_z(vs[i], dz))));
+      drawPoint(r, convertToScreenCoordinates(projectToScreen(
+                       translate_z(rotate_y(vs[i], angle), dz))));
     }
 
     SDL_RenderPresent(r);
@@ -147,5 +152,22 @@ Vec3 translate_z(Vec3 point, float dz)
       .x = point.x,
       .y = point.y,
       .z = point.z + dz,
+  };
+}
+
+Vec3 rotate_y(Vec3 point, float angle)
+{
+  /*
+    x' = x cos θ − z sin θ
+    z' = x sin θ + z cos θ
+  */
+
+  float c = cosf(angle);
+  float s = sinf(angle);
+
+  return (Vec3){
+      .x = point.x * c - point.z * s,
+      .y = point.y,
+      .z = point.x * s + point.z * c,
   };
 }
