@@ -19,8 +19,10 @@ struct Vec3
 
 void loop(SDL_Renderer *r);
 void drawPoint(SDL_Renderer *r, struct Vec2 point);
+
 struct Vec2 convertToScreenCoordinates(struct Vec2 point);
 struct Vec2 projectToScreen(struct Vec3 point);
+struct Vec3 translate_z(struct Vec3 point, float dz);
 
 int main()
 {
@@ -62,11 +64,20 @@ int main()
 
 void loop(SDL_Renderer *r)
 {
+  bool quit = false;
+  SDL_Event event;
+
   float dt = 1. / FPS;
   float dz = 0;
 
-  bool quit = false;
-  SDL_Event event;
+  struct Vec3 vs[] = {
+      {0.5, 0.5, 0.5},    {-0.5, 0.5, 0.5},
+      {-0.5, -0.5, 0.5},  {0.5, -0.5, 0.5},
+
+      {0.5, 0.5, -0.5},   {-0.5, 0.5, -0.5},
+      {-0.5, -0.5, -0.5}, {0.5, -0.5, -0.5},
+  };
+  size_t vs_len = sizeof(vs) / sizeof(*vs);
 
   while (!quit)
   {
@@ -83,14 +94,12 @@ void loop(SDL_Renderer *r)
     SDL_SetRenderDrawColor(r, 24, 24, 24, 255);
     SDL_RenderClear(r);
 
-    drawPoint(r, convertToScreenCoordinates(
-                     projectToScreen((struct Vec3){0.5, 0.5, 1 + dz})));
-    drawPoint(r, convertToScreenCoordinates(
-                     projectToScreen((struct Vec3){-0.5, 0.5, 1 + dz})));
-    drawPoint(r, convertToScreenCoordinates(
-                     projectToScreen((struct Vec3){-0.5, -0.5, 1 + dz})));
-    drawPoint(r, convertToScreenCoordinates(
-                     projectToScreen((struct Vec3){0.5, -0.5, 1 + dz})));
+    for (int i = 0; i < vs_len; i++)
+    {
+      drawPoint(r, convertToScreenCoordinates(projectToScreen(
+        translate_z(vs[i], 1 + dz)
+      )));
+    }
 
     SDL_RenderPresent(r);
   }
@@ -120,5 +129,14 @@ struct Vec2 projectToScreen(struct Vec3 point)
   return (struct Vec2){
       .x = point.x / point.z,
       .y = point.y / point.z,
+  };
+}
+
+struct Vec3 translate_z(struct Vec3 point, float dz)
+{
+  return (struct Vec3){
+    .x = point.x,
+    .y = point.y,
+    .z = point.z + dz,
   };
 }
