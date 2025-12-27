@@ -1,5 +1,6 @@
 #include <SDL3/SDL.h>
 #include <math.h>
+#include <stddef.h>
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -29,6 +30,7 @@ Vec2 projectToScreen(Vec3 point);
 
 Vec3 translate_z(Vec3 point, float dz);
 Vec3 rotate_y(Vec3 point, float angle);
+Vec3 rotate_z(Vec3 point, float angle);
 
 int main()
 {
@@ -79,15 +81,20 @@ void loop(SDL_Renderer *r)
   float angle = 0;
 
   Vec3 vs[] = {
-      {.25, .25, .25},    {-.25, .25, .25},
+      {-.25, .25, .25},   {.25, .25, .25},
       {-.25, -.25, .25},  {.25, -.25, .25},
 
-      {.25, .25, -.25},   {-.25, .25, -.25},
+      {-.25, .25, -.25},  {.25, .25, -.25},
       {-.25, -.25, -.25}, {.25, -.25, -.25},
   };
   size_t vs_len = sizeof(vs) / sizeof(*vs);
 
-  int fs[][4] = {{0, 1, 2, 3}, {4, 5, 6, 7}, {0, 4, 5, 1}, {2, 6, 7, 3}};
+  #define fv 4
+  int fs[][fv] = {{0, 1, 3, 2},
+                  {4, 5, 7, 6},
+
+                  {0, 1, 5, 4},
+                  {2, 3, 7, 6}};
   size_t fs_len = sizeof(fs) / sizeof(*fs);
 
   while (!quit)
@@ -116,16 +123,16 @@ void loop(SDL_Renderer *r)
 
     for (int j = 0; j < fs_len; j++)
     {
-      for (int k = 0; k < 4; k++)
+      for (int k = 0; k < fv; k++)
       {
         Vec3 a = vs[fs[j][k]];
-        Vec3 b = vs[fs[j][(k + 1) % 4]];
+        Vec3 b = vs[fs[j][(k + 1) % fv]];
 
         drawLine(r,
-                 convertToScreenCoordinates(
-                     projectToScreen(translate_z(rotate_y(a, angle), dz))),
-                 convertToScreenCoordinates(
-                     projectToScreen(translate_z(rotate_y(b, angle), dz))));
+                 convertToScreenCoordinates(projectToScreen(
+                     translate_z(rotate_y(rotate_z(a, angle), angle), dz))),
+                 convertToScreenCoordinates(projectToScreen(
+                     translate_z(rotate_y(rotate_z(b, angle), angle), dz))));
       }
     }
 
@@ -195,5 +202,22 @@ Vec3 rotate_y(Vec3 point, float angle)
       .x = point.x * c - point.z * s,
       .y = point.y,
       .z = point.x * s + point.z * c,
+  };
+}
+
+Vec3 rotate_z(Vec3 point, float angle)
+{
+  /*
+    x' = x cos θ − y sin θ
+    y' = x sin θ + y cos θ
+  */
+
+  float c = cosf(angle);
+  float s = sinf(angle);
+
+  return (Vec3){
+      .x = point.x * c - point.y * s,
+      .y = point.x * s + point.y * c,
+      .z = point.z,
   };
 }
